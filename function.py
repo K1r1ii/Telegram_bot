@@ -1,28 +1,31 @@
 from random import randint
 
 def Rock_Paper_Scissors(move):
-    m = ['rock', 'paper', 'scissors']
+    m = ['камень', 'бумага', 'ножницы']
     move_bot = m[randint(0, 2)]
     #print(move_bot)
-    if move == 'rock':
-        if move_bot == 'rock':
-            return f'{move_bot}\ndraw'
-        elif move_bot == 'paper':
-            return f'{move_bot}\nbot win!'
-        elif move_bot == 'scissors':
-            return f'{move_bot}\nuser win!'
-    elif move == 'paper':
-        if move_bot == 'rock':
-            return f'{move_bot}\nuser win!'
-        elif move_bot == 'paper':
-            return f'{move_bot}\ndraw'
-        elif move_bot == 'scissors':
-            return f'{move_bot}\nbot win!'
+    if move == 'камень' or move == 'Камень':
+        if move_bot == 'камень':
+            return f'{move_bot}\nничья!'
+        elif move_bot == 'бумага':
+            return f'{move_bot}\nЯ победил)'
+        elif move_bot == 'ножницы':
+            return f'{move_bot}\nПоздравляю, ты выиграл!!'
+    elif move == 'бумага' or move == 'Бумага':
+        if move_bot == 'камень':
+            return f'{move_bot}\nПоздравляю ты выиграл!'
+        elif move_bot == 'бумага':
+            return f'{move_bot}\nничья!'
+        elif move_bot == 'ножницы':
+            return f'{move_bot}\nя победил)'
 
-    elif move == 'scissors':
-        if move_bot == 'rock':
-            return 'bot win'
-        elif move_bot == 'paper':
-            return 'user win!'
-        elif move_bot == 'scissors':
-            return 'draw'
+    elif move == 'ножницы' or move == 'Ножницы':
+        if move_bot == 'камень':
+            return f'{move_bot}\nя победил)'
+        elif move_bot == 'бумага':
+            return f'{move_bot}\nпоздравляю, ты выиграл!'
+        elif move_bot == 'ножницы':
+            return f'{move_bot}\nничья!'
+    else:
+        return 'Я пока не знаю такой команды('
+
