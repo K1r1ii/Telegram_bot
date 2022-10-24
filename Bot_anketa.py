@@ -1,20 +1,10 @@
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
+from keyboards import kb, ikb
 from function import Rock_Paper_Scissors
 from config import *
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
-
-#создание кнопок
-kb = ReplyKeyboardMarkup(resize_keyboard=True)
-b1 = '/help'
-kb.add(b1)
-
-#создания inline клавиатуры(кнопки закреплены за крнкретным сообщением)
-ikb = InlineKeyboardMarkup(row_width=2)
-ib1 = InlineKeyboardButton(text='отзыв', url='https://t.me/Klr11111')
-ikb.add(ib1)
 
 #действия при команде старт
 @dp.message_handler(commands=['start'])
