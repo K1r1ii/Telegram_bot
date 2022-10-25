@@ -4,8 +4,11 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from keyboards import get_keyboard, get_inline_keyboard, get_cancel
-from function import Rock_Paper_Scissors
 from config import *
+from sqlite_bot.sqlite import db_start, create_profile, edit_profile, delete_profile
+
+async def on_startup(_):
+    await db_start()
 
 #создания экземпляра бота, диспетчера, и состояний
 storage = MemoryStorage()
@@ -19,11 +22,13 @@ class Anketa_states_group(StatesGroup):
     age = State()
     desc = State()
 
+
 #действия при команде старт
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message) -> None:
     await message.answer(text = "Привет, я бот из команды /start!", reply_markup=get_keyboard())
     await message.delete()
+    await create_profile(user_id=message.from_user.id)
 
 #отмена заполнения анкеты, сброс состояний
 @dp.message_handler(commands=['cancel'], state='*')
@@ -33,7 +38,14 @@ async def cancel_command(message: types.Message, state: FSMContext) -> None:
         return
     await message.answer(text='Заполнение анкеты отменено',
                          reply_markup=get_keyboard())
+    await delete_profile(user_id=message.from_user.id)
     await state.finish()
+
+#функция удаления профиля
+@dp.message_handler(commands=['DeleteProfile'])
+async def delete_command(message: types.Message):
+    await delete_profile(user_id=message.from_user.id)
+    await message.answer(text='Ваша анкета удалена')
 
 #начинаем создавать анкету
 @dp.message_handler(Text(equals='Заполнить анкету!', ignore_case=True), state=None)
@@ -79,6 +91,7 @@ async def load_desc(message: types.Message, state: FSMContext):
         await bot.send_photo(message.from_user.id,
                              photo=data['photo'],
                              caption=f'{data["name"]}, {data["age"]}\n{data["desc"]}')
+    await edit_profile(state, user_id=message.from_user.id)
     await state.finish()
 
 # #вызов функционала бота
@@ -91,20 +104,8 @@ async def load_desc(message: types.Message, state: FSMContext):
 # async def description_command(message: types.Message):
 #     await message.answer(DESCRIPTION)
 #     await message.delete()
-#
-# #тест inline клавиатуры, ссылка на профиль в телеграм
-# @dp.message_handler(commands=['feedback'])
-# async def send_feedback(message: types.Message):
-#     await message.answer(text='Если ты хочешь как то улучшить бота, то напиши нам отзыв!', reply_markup=get_inline_keyboard())
-#
-# #развлекательная часть
-# @dp.message_handler()
-# async def game(message: types.Message):
-#     if message.text == '❤️':
-#         await message.answer('🖤')
-#     else:
-#         move = message.text
-#         await message.answer(text=Rock_Paper_Scissors(move))
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp,
+                           skip_updates=True,
+                           on_startup=on_startup)
