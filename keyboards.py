@@ -3,7 +3,9 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 #создание кнопок
 def get_keyboard() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.add(KeyboardButton('Заполнить анкету'))
+    b1 = KeyboardButton('Заполнить анкету')
+    b2 = KeyboardButton('Найти друга')
+    kb.add(b1).add(b2)
     return kb
 
 #создания inline клавиатуры(кнопки закреплены за крнкретным сообщением)

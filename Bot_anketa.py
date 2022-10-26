@@ -54,7 +54,7 @@ async def delete_command(message: types.Message):
 #функция, отвечающая за рекомендации другим пользователям
 #счетчик count нужен для того, чтобы избежать отправки анкеты, которая уже была отправлена
 count = 0
-@dp.message_handler(commands=['rec'])
+@dp.message_handler(Text(equals='Найти друга', ignore_case=True))
 async def rec_command(message: types.Message):
     global count
 
@@ -87,7 +87,7 @@ async def feedback_command(message: types.Message):
                          reply_markup=get_inline_keyboard_feedback())
 
 #начинаем создавать анкету
-@dp.message_handler(Text(equals='Заполнить анкету!', ignore_case=True), state=None)
+@dp.message_handler(Text(equals='Заполнить анкету', ignore_case=True), state=None)
 async def start_anketa(message: types.Message,  state: FSMContext) -> None:
     await Anketa_states_group.photo.set()
     await create_profile(user_id=message.from_user.id)
