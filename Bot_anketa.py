@@ -3,9 +3,9 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from keyboards import get_keyboard, get_inline_keyboard, get_cancel
+from keyboards import get_keyboard, get_inline_keyboard_feedback, get_cancel, get_inline_keyboard_rec
 from config import *
-from sqlite_bot.sqlite import db_start, create_profile, edit_profile, delete_profile
+from sqlite_bot.sqlite import db_start, create_profile, edit_profile, delete_profile, rec
 
 async def on_startup(_):
     await db_start()
@@ -21,6 +21,7 @@ class Anketa_states_group(StatesGroup):
     name = State()
     age = State()
     desc = State()
+    url_tg = State()
 
 
 #действия при команде старт
@@ -28,10 +29,10 @@ class Anketa_states_group(StatesGroup):
 async def start_command(message: types.Message) -> None:
     await message.answer(text = "Привет, я бот из команды /start!", reply_markup=get_keyboard())
     await message.delete()
-    await create_profile(user_id=message.from_user.id)
+
 
 #отмена заполнения анкеты, сброс состояний
-@dp.message_handler(commands=['cancel'], state='*')
+@dp.message_handler(Text(equals='Отменить заполнение', ignore_case=True), state='*')
 async def cancel_command(message: types.Message, state: FSMContext) -> None:
     current_state = await state.get_state()
     if current_state is None:
@@ -42,16 +43,55 @@ async def cancel_command(message: types.Message, state: FSMContext) -> None:
     await state.finish()
 
 #функция удаления профиля
-@dp.message_handler(commands=['DeleteProfile'])
+@dp.message_handler(commands=['deleteprofile'])
 async def delete_command(message: types.Message):
     await delete_profile(user_id=message.from_user.id)
-    await message.answer(text='Ваша анкета удалена')
+    await message.answer(text='Ваша анкета удалена',
+                         reply_markup=get_keyboard())
+
+
+
+#функция, отвечающая за рекомендации другим пользователям
+#счетчик count нужен для того, чтобы избежать отправки анкеты, которая уже была отправлена
+count = 0
+@dp.message_handler(commands=['rec'])
+async def rec_command(message: types.Message):
+    global count
+
+    if type(rec(user_id=message.from_user.id, count=count)) == str:     #если мы отправляем строку, значит дошли до конца в списке анкет, предупреждаем польхователя, обнуляем счетчик и начинаем сначала
+        await message.answer(text=rec(user_id=message.from_user.id, count=count))
+        count = 0
+    else:   #если тип не строчный(массив), то собираем и отправляем анкету, увеличивая счетчик
+        m = rec(user_id=message.from_user.id, count=count)
+        await bot.send_photo(message.from_user.id,
+                             photo=m[1],
+                             caption=f'{m[2]}, {m[3]}\n{m[4]}',
+                             reply_markup=get_inline_keyboard_rec(m[5]))
+        count += 1
+
+#вызов функционала бота
+@dp.message_handler(commands=['help'])
+async def help_command(message: types.Message):
+    await message.reply(HELP_LIST, parse_mode='HTML')
+
+#вызов описания бота
+@dp.message_handler(commands=['description'])
+async def description_command(message: types.Message):
+    await message.answer(DESCRIPTION)
+    await message.delete()
+
+#отзыв
+@dp.message_handler(commands=['feedback'])
+async def feedback_command(message: types.Message):
+    await message.answer(text='хочешь оставить отзыв? пиши сюда!',
+                         reply_markup=get_inline_keyboard_feedback())
 
 #начинаем создавать анкету
 @dp.message_handler(Text(equals='Заполнить анкету!', ignore_case=True), state=None)
 async def start_anketa(message: types.Message,  state: FSMContext) -> None:
     await Anketa_states_group.photo.set()
-    await message.answer('Отправь свое фото!', reply_markup=get_cancel())
+    await create_profile(user_id=message.from_user.id)
+    await message.answer('Отправь мне свое фото', reply_markup=get_cancel())
 
 #проверяем корректность отправки фото
 @dp.message_handler(lambda message: not message.photo, state=Anketa_states_group.photo)
@@ -64,7 +104,7 @@ async def load_photo(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['photo'] = message.photo[0].file_id
     await Anketa_states_group.next()
-    await message.answer('Теперь напиши свое имя)')
+    await message.answer('Теперь напиши свое имя')
 
 #сохраняем имя и спрашиваем возраст(переход к следующему состоянию)
 @dp.message_handler(state=Anketa_states_group.name)
@@ -87,23 +127,25 @@ async def load_age(message: types.Message, state: FSMContext):
 async def load_desc(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['desc'] = message.text
+    await  Anketa_states_group.next()
+    await message.answer('Отправь мне ссылку на твой профиль в Телеграме ')
+
+@dp.message_handler(state=Anketa_states_group.url_tg)
+async def load_url(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        await bot.send_photo(message.from_user.id,
-                             photo=data['photo'],
-                             caption=f'{data["name"]}, {data["age"]}\n{data["desc"]}')
+        if message.text[0] == '@':
+            user_url = 'https://t.me/' + message.text[1:]
+        else:
+            user_url = message.text
+        data['url_tg'] = user_url
+    await message.answer(text='Анкета готова!',
+                         reply_markup=get_keyboard())
+    await bot.send_photo(message.from_user.id,
+                         photo=data['photo'],
+                         caption=f'{data["name"]}, {data["age"]}\n{data["desc"]}'
+                         )
     await edit_profile(state, user_id=message.from_user.id)
     await state.finish()
-
-# #вызов функционала бота
-# @dp.message_handler(commands=['help'])
-# async def help_command(message: types.Message):
-#     await message.reply(HELP_LIST, parse_mode='HTML')
-#
-# #вызов описания бота
-# @dp.message_handler(commands=['description'])
-# async def description_command(message: types.Message):
-#     await message.answer(DESCRIPTION)
-#     await message.delete()
 
 if __name__ == '__main__':
     executor.start_polling(dp,

@@ -3,11 +3,20 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 #создание кнопок
 def get_keyboard() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.add(KeyboardButton('Заполнить анкету!'))
+    kb.add(KeyboardButton('Заполнить анкету'))
     return kb
 
 #создания inline клавиатуры(кнопки закреплены за крнкретным сообщением)
-def get_inline_keyboard() -> InlineKeyboardMarkup:
+
+#inline кнопка для рекомендаций, содержит ссылка на рекомендуемого пользователя
+def get_inline_keyboard_rec(url_tg) -> InlineKeyboardMarkup:
+    ikb = InlineKeyboardMarkup(row_width=2)
+    ib1 = InlineKeyboardButton(text='Начать общаться', url=url_tg)
+    ikb.add(ib1)
+    return ikb
+
+#inline кнопка для отзыва(ссылка на разработчика)
+def get_inline_keyboard_feedback() -> InlineKeyboardMarkup:
     ikb = InlineKeyboardMarkup(row_width=2)
     ib1 = InlineKeyboardButton(text='отзыв', url='https://t.me/Klr11111')
     ikb.add(ib1)
@@ -16,5 +25,5 @@ def get_inline_keyboard() -> InlineKeyboardMarkup:
 #создания клавиатуры для сброса состояний
 def get_cancel() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.add(KeyboardButton('/cancel'))
+    kb.add(KeyboardButton('Отменить заполнение'))
     return kb
