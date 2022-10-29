@@ -1,16 +1,16 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 
 #создание кнопок
 def get_keyboard() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     b1 = KeyboardButton('Заполнить анкету')
     b2 = KeyboardButton('Найти друга!')
-    kb.add(b1).add(b2)
+    b3 = KeyboardButton('Мой баланс')
+    kb.add(b1).add(b2).add(b3)
     return kb
 
-#создания inline клавиатуры(кнопки закреплены за крнкретным сообщением)
-
-#inline кнопка для рекомендаций, содержит ссылка на рекомендуемого пользователя
+#создания inline клавиатуры(кнопки закреплены за конкретным сообщением)
+#inline кнопка для рекомендаций, содержит ссылку на рекомендуемого пользователя
 def get_inline_keyboard_rec(url_tg) -> InlineKeyboardMarkup:
     ikb = InlineKeyboardMarkup(row_width=2)
     ib1 = InlineKeyboardButton(text='Начать общаться!', url=url_tg)

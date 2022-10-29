@@ -1,6 +1,5 @@
 import sqlite3 as sq
 from fuzzywuzzy import fuzz
-# from fuzzywuzzy import process
 
 #функция, создающая базу данных
 async def db_start():
@@ -9,25 +8,26 @@ async def db_start():
     db = sq.connect('ankets.db')
     cursor = db.cursor()
 
-    cursor.execute('CREATE TABLE IF NOT EXISTS profile(user_id TEXT PRIMARY KEY, photo TEXT, name TEXT, age TEXT, description TEXT, url_tg TEXT)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS profile(user_id TEXT PRIMARY KEY, photo TEXT, name TEXT, age TEXT, description TEXT, url_tg TEXT, score TEXT)')
     db.commit()
 
 #создаем профиль (таблица с колонками id, фото, имя, возраст, описание)
 async def create_profile(user_id):
-    user = cursor.execute('SELECT 1 FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()
+    user = cursor.execute('SELECT * FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()
     if not user:
-        cursor.execute('INSERT INTO profile VALUES(?, ?, ?, ?, ?, ?)', (user_id, '', '', '', '', ''))
+        cursor.execute('INSERT INTO profile VALUES(?, ?, ?, ?, ?, ?, ?)', (user_id, '', '', '', '', '', ''))
         db.commit()
 
 #добавление профиля, если такого не существует
-async def edit_profile(state, user_id):
+async def edit_profile(state, user_id, score):
     async with state.proxy() as data:
-        cursor.execute("UPDATE profile SET photo = '{}', name = '{}', age = '{}', description = '{}', url_tg = '{}' WHERE user_id = '{}' ".format(
+        cursor.execute("UPDATE profile SET photo = '{}', name = '{}', age = '{}', description = '{}', url_tg = '{}', score = {}  WHERE user_id = '{}' ".format(
             data['photo'],
             data['name'],
             data['age'],
             data['desc'],
             data['url_tg'],
+            score,
             user_id
         ))
         db.commit()
@@ -75,6 +75,18 @@ def rec(user_id, count):
 
     else:
         return 'Ты посмотрел все анкеты, котрые есть, теперь они пойдут заново'
+
+#обновление количества очков при ответе на вопрос
+def answer_question(user_id, count_zp):
+    if count_zp == 0:
+        now_score = int(cursor.execute('SELECT score FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()[0])
+        cursor.execute('UPDATE profile SET score = "{}" WHERE user_id = {} '.format(str(now_score + 10), user_id))
+        db.commit()
+
+#обращение к бд за информацией о балансе
+def balans_inf(user_id):
+    inf = int(cursor.execute('SELECT score FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()[0])
+    return inf
 
 #удаление профиля
 async def delete_profile(user_id):

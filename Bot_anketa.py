@@ -3,10 +3,11 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
-from keyboards import get_keyboard, get_inline_keyboard_feedback, get_cancel, get_inline_keyboard_rec
+from keyboards import *
 from config import *
-from sqlite_bot.sqlite import db_start, create_profile, edit_profile, delete_profile, rec
+from sqlite_bot.sqlite import *
 
+#запуск базы данных(создание)
 async def on_startup(_):
     await db_start()
 
@@ -14,6 +15,10 @@ async def on_startup(_):
 storage = MemoryStorage()
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot= bot, storage=storage)
+
+#значения, которые будут задваться с аккаунта администратора
+start_score = 10
+question_text = 'Как прошел твой день?'
 
 #создание класса для состояний
 class Anketa_states_group(StatesGroup):
@@ -23,13 +28,11 @@ class Anketa_states_group(StatesGroup):
     desc = State()
     url_tg = State()
 
-
 #действия при команде старт
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message) -> None:
     await message.answer(text = START, reply_markup=get_keyboard())
     await message.delete()
-
 
 #отмена заполнения анкеты, сброс состояний
 @dp.message_handler(Text(equals='Отменить заполнение', ignore_case=True), state='*')
@@ -49,11 +52,10 @@ async def delete_command(message: types.Message):
     await message.answer(text='Ваша анкета удалена',
                          reply_markup=get_keyboard())
 
-
-
 #функция, отвечающая за рекомендации другим пользователям
 #счетчик count нужен для того, чтобы избежать отправки анкеты, которая уже была отправлена
 count = 0
+count_zp = 0
 @dp.message_handler(Text(equals='Найти друга!', ignore_case=True))
 async def rec_command(message: types.Message):
     global count
@@ -84,6 +86,18 @@ async def description_command(message: types.Message):
 async def feedback_command(message: types.Message):
     await message.answer(text='хочешь оставить отзыв? пиши сюда!',
                          reply_markup=get_inline_keyboard_feedback())
+
+#функция, вызывающая заданный админом вопрос от бота
+@dp.message_handler(commands=['question'])
+async def questions(message: types.Message):
+    global count_zp, question_text
+    await bot.send_message(chat_id=message.chat.id, text=question_text)
+    count_zp = 0
+
+#функция, возвращающая баланс текущего пользователя
+@dp.message_handler(Text(equals='Мой баланс', ignore_case=True))
+async def balans(message: types.Message):
+    await bot.send_message(message.from_user.id, text=balans_inf(user_id=message.from_user.id))
 
 #начинаем создавать анкету
 @dp.message_handler(Text(equals='Заполнить анкету', ignore_case=True), state=None)
@@ -143,8 +157,20 @@ async def load_url(message: types.Message, state: FSMContext):
                          photo=data['photo'],
                          caption=f'{data["name"]}, {data["age"]}\n{data["desc"]}'
                          )
-    await edit_profile(state, user_id=message.from_user.id)
+    await edit_profile(state, user_id=message.from_user.id, score=start_score)
     await state.finish()
+
+#функция для приема ответов пользователя, ответ дается с спецсимволом в начале
+@dp.message_handler()
+async def answer(message: types.Message):
+    global count_zp
+    if message.text[0] == '*':
+        if count_zp == 0:
+            answer_question(user_id=message.from_user.id, count_zp=count_zp)
+            await bot.send_message(message.from_user.id, text='Вам начислено 10 баллов за ответ на вопрос!')
+        else:
+            await bot.send_message(message.from_user.id, text="Вы уже получили награду за этот вопрос")
+        count_zp += 1
 
 if __name__ == '__main__':
     executor.start_polling(dp,
