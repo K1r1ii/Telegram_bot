@@ -83,6 +83,11 @@ def answer_question(user_id, count_zp):
         cursor.execute('UPDATE profile SET score = "{}" WHERE user_id = {} '.format(str(now_score + 10), user_id))
         db.commit()
 
+def waste(user_id):
+    now_score = int(cursor.execute('SELECT score FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()[0])
+    cursor.execute('UPDATE profile SET score = "{}" WHERE user_id = {}'.format(str(now_score - 10), user_id))
+    db.commit()
+
 #обращение к бд за информацией о балансе
 def balans_inf(user_id):
     inf = int(cursor.execute('SELECT score FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()[0])

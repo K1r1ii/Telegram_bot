@@ -59,16 +59,23 @@ count_zp = 0
 @dp.message_handler(Text(equals='Найти друга!', ignore_case=True))
 async def rec_command(message: types.Message):
     global count
-    if type(rec(user_id=message.from_user.id, count=count)) == str:     #если мы отправляем строку, значит дошли до конца в списке анкет, предупреждаем польхователя, обнуляем счетчик и начинаем сначала
-        await message.answer(text=rec(user_id=message.from_user.id, count=count))
-        count = 0
-    else:   #если тип не строчный(массив), то собираем и отправляем анкету, увеличивая счетчик
-        m = rec(user_id=message.from_user.id, count=count)
-        await bot.send_photo(message.from_user.id,
-                             photo=m[1],
-                             caption=f'{m[2]}, {m[3]}\n{m[4]}',
-                             reply_markup=get_inline_keyboard_rec(m[5]))
-        count += 1
+    now_balans = balans_inf(user_id=message.from_user.id)
+    if now_balans >= start_score:
+        waste(user_id=message.from_user.id)
+        await bot.send_message(message.from_user.id, text='С вашего счета списано 10 валют!')
+        if type(rec(user_id=message.from_user.id, count=count)) == str:     #если мы отправляем строку, значит дошли до конца в списке анкет, предупреждаем польхователя, обнуляем счетчик и начинаем сначала
+            await message.answer(text=rec(user_id=message.from_user.id, count=count))
+            count = 0
+        else:   #если тип не строчный(массив), то собираем и отправляем анкету, увеличивая счетчик
+            m = rec(user_id=message.from_user.id, count=count)
+            await bot.send_photo(message.from_user.id,
+                                 photo=m[1],
+                                 caption=f'{m[2]}, {m[3]}\n{m[4]}',
+                                 reply_markup=get_inline_keyboard_rec(m[5]))
+            count += 1
+    else:
+        await bot.send_message(message.from_user.id, text='На счету не хватает денег, видимо пора отвечать на вопросы в общем чате!')
+
 
 #вызов функционала бота
 @dp.message_handler(commands=['help'])
