@@ -48,10 +48,13 @@ def rec(user_id, count):
         return 'Кроме вас пока что никого нет'
 
     user_desc = cursor.execute('SELECT description FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()[0]
+
     for i in users_list:
         desc_users.append(cursor.execute('SELECT description FROM profile WHERE user_id == {key}'.format(key=i)).fetchone()[0])
+
     for i in range(len(desc_users)):
         reyting_users.append(0)
+
     for i in desc_users:
         reyting_users[desc_users.index(i)] = fuzz.WRatio(user_desc, i)
 
@@ -60,19 +63,18 @@ def rec(user_id, count):
             if reyting_users[j + 1] < reyting_users[j]:
                 reyting_users[j], reyting_users[j+1] = reyting_users[j+1], reyting_users[j]
                 users_list[j], users_list[j+1] = users_list[j+1], users_list[j]
-
+    users_list.reverse()
 
     if len(users_list) > count:     #проверка, прошли ли все анкеты или нет
         rec_user_id = users_list[count] #id рекомендуемого пользователя
         rec_user_inf = cursor.execute('SELECT * FROM profile WHERE user_id == {key}'.format(key=rec_user_id)).fetchone()   #получение остальных данных рекомендуемого пользователя
         for j in rec_user_inf:
             rec_user.append(j)
-        return rec_user_inf
+
+        return rec_user
 
     else:
         return 'Ты посмотрел все анкеты, котрые есть, теперь они пойдут заново'
-
-
 
 #удаление профиля
 async def delete_profile(user_id):

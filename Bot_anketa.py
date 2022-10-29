@@ -54,7 +54,7 @@ async def delete_command(message: types.Message):
 #функция, отвечающая за рекомендации другим пользователям
 #счетчик count нужен для того, чтобы избежать отправки анкеты, которая уже была отправлена
 count = 0
-@dp.message_handler(Text(equals='Найти друга', ignore_case=True))
+@dp.message_handler(Text(equals='Найти друга!', ignore_case=True))
 async def rec_command(message: types.Message):
     global count
     if type(rec(user_id=message.from_user.id, count=count)) == str:     #если мы отправляем строку, значит дошли до конца в списке анкет, предупреждаем польхователя, обнуляем счетчик и начинаем сначала
