@@ -29,3 +29,7 @@ def get_cancel() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     kb.add(KeyboardButton('Отменить заполнение'))
     return kb
+def test_key():
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.add(KeyboardButton('Отменить заполнение'))
+    return kb
