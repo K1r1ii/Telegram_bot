@@ -27,7 +27,7 @@ class Anketa_states_group(StatesGroup):
 #действия при команде старт
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message) -> None:
-    await message.answer(text = "Привет, я бот из команды /start!", reply_markup=get_keyboard())
+    await message.answer(text = START, reply_markup=get_keyboard())
     await message.delete()
 
 
@@ -57,7 +57,6 @@ count = 0
 @dp.message_handler(Text(equals='Найти друга', ignore_case=True))
 async def rec_command(message: types.Message):
     global count
-
     if type(rec(user_id=message.from_user.id, count=count)) == str:     #если мы отправляем строку, значит дошли до конца в списке анкет, предупреждаем польхователя, обнуляем счетчик и начинаем сначала
         await message.answer(text=rec(user_id=message.from_user.id, count=count))
         count = 0
@@ -104,7 +103,7 @@ async def load_photo(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['photo'] = message.photo[0].file_id
     await Anketa_states_group.next()
-    await message.answer('Теперь напиши свое имя')
+    await message.answer('Как тебя зовут?')
 
 #сохраняем имя и спрашиваем возраст(переход к следующему состоянию)
 @dp.message_handler(state=Anketa_states_group.name)
@@ -128,7 +127,7 @@ async def load_desc(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['desc'] = message.text
     await  Anketa_states_group.next()
-    await message.answer('Отправь мне ссылку на твой профиль в Телеграме ')
+    await message.answer('Отправь мне ссылку на твой профиль в Телеграме')
 
 @dp.message_handler(state=Anketa_states_group.url_tg)
 async def load_url(message: types.Message, state: FSMContext):

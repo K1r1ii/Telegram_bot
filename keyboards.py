@@ -4,7 +4,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 def get_keyboard() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     b1 = KeyboardButton('Заполнить анкету')
-    b2 = KeyboardButton('Найти друга')
+    b2 = KeyboardButton('Найти друга!')
     kb.add(b1).add(b2)
     return kb
 
@@ -13,7 +13,7 @@ def get_keyboard() -> ReplyKeyboardMarkup:
 #inline кнопка для рекомендаций, содержит ссылка на рекомендуемого пользователя
 def get_inline_keyboard_rec(url_tg) -> InlineKeyboardMarkup:
     ikb = InlineKeyboardMarkup(row_width=2)
-    ib1 = InlineKeyboardButton(text='Начать общаться', url=url_tg)
+    ib1 = InlineKeyboardButton(text='Начать общаться!', url=url_tg)
     ikb.add(ib1)
     return ikb
 
