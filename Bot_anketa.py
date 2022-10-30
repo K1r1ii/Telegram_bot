@@ -29,8 +29,13 @@ class Anketa_states_group(StatesGroup):
     url_tg = State()
 
 #действия при команде старт
+count_start = 0
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message) -> None:
+    global count_start
+    if count_start == 0:
+        first_salary(user_id=message.from_user.id)
+        count_start += 1
     await message.answer(text = START, reply_markup=get_keyboard())
     await message.delete()
 
@@ -109,6 +114,7 @@ async def balans(message: types.Message):
 #начинаем создавать анкету
 @dp.message_handler(Text(equals='Заполнить анкету', ignore_case=True), state=None)
 async def start_anketa(message: types.Message,  state: FSMContext) -> None:
+
     await Anketa_states_group.photo.set()
     await create_profile(user_id=message.from_user.id)
     await message.answer('Отправь мне свое фото', reply_markup=get_cancel())

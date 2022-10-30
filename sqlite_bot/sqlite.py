@@ -40,7 +40,6 @@ def rec(user_id, count):
     desc_users = []
     reyting_users = []
 
-
     for i in users:
         users_list.append(int(i[0]))
     users_list.remove(user_id)
@@ -83,9 +82,16 @@ def answer_question(user_id, count_zp):
         cursor.execute('UPDATE profile SET score = "{}" WHERE user_id = {} '.format(str(now_score + 10), user_id))
         db.commit()
 
+#трата баллов
 def waste(user_id):
     now_score = int(cursor.execute('SELECT score FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()[0])
     cursor.execute('UPDATE profile SET score = "{}" WHERE user_id = {}'.format(str(now_score - 10), user_id))
+    db.commit()
+
+#первое пополнение при вызове команды /start
+def first_salary(user_id):
+    start_summ = 50
+    cursor.execute('UPDATE profile SET score = "{}" WHERE user_id = {}'.format(start_summ, user_id))
     db.commit()
 
 #обращение к бд за информацией о балансе
