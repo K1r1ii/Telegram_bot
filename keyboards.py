@@ -24,8 +24,14 @@ def get_inline_keyboard_feedback() -> InlineKeyboardMarkup:
     ikb.add(ib1)
     return ikb
 
-#создания клавиатуры для сброса состояний
-def get_cancel() -> ReplyKeyboardMarkup:
+#создания клавиатуры для сброса состояний(анкета)
+def get_cancel_anketa() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.add(KeyboardButton('Отменить заполнение'))
+    kb.add(KeyboardButton('Отменить заполнение анкеты'))
+    return kb
+
+#создание клавиатуры для сброса состояний(объявления)
+def get_cancel_ads() -> ReplyKeyboardMarkup:
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.add(KeyboardButton('Отменить заполнение объявления'))
     return kb

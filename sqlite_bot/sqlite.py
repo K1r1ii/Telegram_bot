@@ -9,13 +9,32 @@ async def db_start():
     cursor = db.cursor()
 
     cursor.execute('CREATE TABLE IF NOT EXISTS profile(user_id TEXT PRIMARY KEY, photo TEXT, name TEXT, age TEXT, description TEXT, url_tg TEXT, score TEXT)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS ads(number TEXT PRIMARY KEY, photo TEXT, description TEXT, price TEXT, count TEXT)')
     db.commit()
+
+#создаие шаблона под одно объявление
+async def create_ads(count_ad):
+    cursor.execute('INSERT INTO ads VALUES(?, ?, ?, ?, ?)', (count_ad, '', '', '', ''))
+    db.commit()
+
 
 #создаем профиль (таблица с колонками id, фото, имя, возраст, описание)
 async def create_profile(user_id):
     user = cursor.execute('SELECT * FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()
     if not user:
         cursor.execute('INSERT INTO profile VALUES(?, ?, ?, ?, ?, ?, ?)', (user_id, '', '', '', '', '', ''))
+        db.commit()
+
+#добавление объявления
+async def edit_ads(state, count_ad):
+    async with state.proxy() as data:
+        cursor.execute("UPDATE ads SET photo = '{}', description = '{}', price = '{}', count = '{}' WHERE number = '{}'".format(
+            data['photo_ads'],
+            data['desc_ads'],
+            data['price_ads'],
+            data['count_product_ads'],
+            count_ad
+        ))
         db.commit()
 
 #добавление профиля, если такого не существует
@@ -102,4 +121,9 @@ def balans_inf(user_id):
 #удаление профиля
 async def delete_profile(user_id):
     cursor.execute('DELETE from profile WHERE user_id == {key}'.format(key=user_id))
+    db.commit()
+
+#удаление объявления
+async def delete_ads(count_ad):
+    cursor.execute('DELETE from ads WHERE number == {key}'.format(key=count_ad))
     db.commit()
