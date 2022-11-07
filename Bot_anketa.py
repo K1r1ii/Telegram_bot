@@ -131,7 +131,7 @@ async def rec_command(message: types.Message):
         if type(rec(user_id=message.from_user.id, count=count)) == str:     #если мы отправляем строку, значит дошли до конца в списке анкет, предупреждаем польхователя, обнуляем счетчик и начинаем сначала
             await message.answer(text=rec(user_id=message.from_user.id, count=count))
             count = 0
-        else:   #если тип не строчный(массив), то собираем и отправляем анкету, увеличивая счетчик
+        else:   #если тип не строчный(список), то собираем и отправляем анкету, увеличивая счетчик
             m = rec(user_id=message.from_user.id, count=count)
             await bot.send_photo(message.from_user.id,
                                  photo=m[1],
@@ -140,6 +140,25 @@ async def rec_command(message: types.Message):
             count += 1
     else:
         await bot.send_message(message.from_user.id, text='На счету не хватает денег, видимо пора отвечать на вопросы в общем чате!')
+
+#рекомендация объявлений
+count_ads = 0 #кол-во просотров объявлений
+admin_url = 'https://t.me/Klr11111' #пока что моя ссылка, позже будет ссылка на акк админа(HR)
+@dp.message_handler(Text(equals='посмотреть объявление', ignore_case=True))
+async def rec_command_ads(message: types.Message):
+    global count_ads
+    if type(rec_ads(count_ads=count_ads)) == str:  # если мы отправляем строку, значит дошли до конца в списке объявлений, предупреждаем пользователя, обнуляем счетчик и начинаем сначала
+        await message.answer(text=rec_ads(count_ads))
+        count_ads = 0
+    else:  # если тип не строчный(список), то собираем и отправляем объявление, увеличивая счетчик
+        m = rec_ads(count_ads)
+        await bot.send_photo(message.from_user.id,
+                             photo=m[1],
+                             caption=f'{m[2]}\nЦена: {m[3]}\nКоличество: {m[4]}',
+                             reply_markup=get_inline_keyboard_ads(admin_url=admin_url)
+                             )
+        count_ads += 1
+
 
 #######################################   Создание объявления   ####################################
 count_ad = 0

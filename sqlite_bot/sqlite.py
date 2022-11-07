@@ -92,7 +92,29 @@ def rec(user_id, count):
         return rec_user
 
     else:
-        return 'Ты посмотрел все анкеты, котрые есть, теперь они пойдут заново'
+        return 'Ты посмотрел все анкеты, которые есть, теперь они пойдут заново'
+
+#рекомендация объявлений
+def rec_ads(count_ads):
+    ads = cursor.execute('SELECT number FROM ads').fetchall() #все номера объявлений
+    ads_list = []   #список из номеров объяявлений
+    ad = []    #список с информацией о конкретном объявлении
+    for i in ads:
+        ads_list.append(int(i[0]))
+
+    if ads_list == []:
+        return 'Пока что нет объявлений'
+
+    if len(ads_list) > count_ads:
+        ad_rec = ads_list[count_ads]
+        ad_inf = cursor.execute('SELECT * FROM ads WHERE number == {key}'.format(key=ad_rec)).fetchone()
+        for i in ad_inf:
+            ad.append(i)
+        return ad
+    else:
+        return 'Ты посмотрел все объявления, теперь они пойдут заново'
+
+
 
 #обновление количества очков при ответе на вопрос
 def answer_question(user_id, count_zp):
