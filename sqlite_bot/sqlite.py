@@ -114,6 +114,17 @@ def rec_ads(count_ads):
     else:
         return 'Ты посмотрел все объявления, теперь они пойдут заново'
 
+def change_data(count_ads, user_id):
+    price = cursor.execute('SELECT price FROM ads WHERE number == {key}'.format(key=count_ads)).fetchone()
+    now_score = int(cursor.execute('SELECT score FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()[0])
+    cursor.execute('UPDATE profile SET score = "{}" WHERE user_id = {}'.format(str(now_score - int(price[0])), user_id))
+    db.commit()
+
+def price(count_ads):
+    price = cursor.execute('SELECT price FROM ads WHERE number == {key}'.format(key=count_ads)).fetchone()
+    return int(price[0])
+
+
 
 
 #обновление количества очков при ответе на вопрос
@@ -148,4 +159,7 @@ async def delete_profile(user_id):
 #удаление объявления
 async def delete_ads(count_ad):
     cursor.execute('DELETE from ads WHERE number == {key}'.format(key=count_ad))
+    db.commit()
+async def delete_all_ads():
+    cursor.execute("DELETE from ads")
     db.commit()

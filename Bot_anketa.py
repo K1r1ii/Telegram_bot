@@ -38,6 +38,11 @@ class Ads_states_group(StatesGroup):
 #######################################   Обработчики вспомогательных команд   ####################################
 #действия при команде старт
 count_start = 0
+# id = '5046504652'
+# @dp.message_handler()
+# async def test(message: types.Message):
+#     await bot.send_message(id, text='Привет')
+
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message) -> None:
     global count_start
@@ -77,6 +82,11 @@ async def delete_command_ads(message: types.Message):
     await message.answer(text='Ваше объявление удалено',
                          reply_markup=get_keyboard())
     count_ad = 0
+
+@dp.message_handler(commands=['deleteadsall'])
+async def delete_ads_all_cmd(message: types.Message):
+    await delete_all_ads()
+
 
 #функция удаления профиля
 @dp.message_handler(commands=['deleteprofile'])
@@ -142,7 +152,7 @@ async def rec_command(message: types.Message):
         await bot.send_message(message.from_user.id, text='На счету не хватает денег, видимо пора отвечать на вопросы в общем чате!')
 
 #рекомендация объявлений
-count_ads = 0 #кол-во просотров объявлений
+count_ads = 0 #кол-во просмотров объявлений
 admin_url = 'https://t.me/Klr11111' #пока что моя ссылка, позже будет ссылка на акк админа(HR)
 @dp.message_handler(Text(equals='посмотреть объявление', ignore_case=True))
 async def rec_command_ads(message: types.Message):
@@ -155,12 +165,20 @@ async def rec_command_ads(message: types.Message):
         await bot.send_photo(message.from_user.id,
                              photo=m[1],
                              caption=f'{m[2]}\nЦена: {m[3]}\nКоличество: {m[4]}',
-                             reply_markup=get_inline_keyboard_ads(admin_url=admin_url)
+                             reply_markup=get_callback_keyboard()
                              )
         count_ads += 1
 
+#действие при нажатии callback кнопки ДОРАБОТАТЬ!!!
+@dp.callback_query_handler(text='buy')
+async def buy_ads(call: types.CallbackQuery):
+    await call.message.answer('Покупка совершена!')
+    change_data(count_ads=count_ads, user_id=call.from_user.id)
+    await call.message.answer(f'С вашего счета списано {price(count_ads=count_ads)}')
+
 
 #######################################   Создание объявления   ####################################
+#СДЕЛАТЬ НОВЫЙ КЛЮЧ ДЛЯ ТАБЛИЦЫ ОБЪЯВЛЕНИЙ (нужно избавиться от счетчиков в коде)
 count_ad = 0
 @dp.message_handler(Text(equals='Объявление', ignore_case=True), state=None)
 async def start_ad(message: types.Message, state: FSMContext) -> None:

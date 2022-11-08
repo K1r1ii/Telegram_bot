@@ -18,9 +18,15 @@ def get_inline_keyboard_rec(url_tg) -> InlineKeyboardMarkup:
     return ikb
 
 #inline кнопка для перехода к покупке товара
-def get_inline_keyboard_ads(admin_url) -> InlineKeyboardMarkup:
+# def get_inline_keyboard_ads(admin_url) -> InlineKeyboardMarkup:
+#     ikb = InlineKeyboardMarkup(row_width=2)
+#     ib1 = InlineKeyboardButton(text='Купить!', url=admin_url)
+#     ikb.add(ib1)
+#     return ikb
+
+def get_callback_keyboard() -> InlineKeyboardMarkup:
     ikb = InlineKeyboardMarkup(row_width=2)
-    ib1 = InlineKeyboardButton(text='Купить!', url=admin_url)
+    ib1 = InlineKeyboardButton(text='Купить!', callback_data='buy')
     ikb.add(ib1)
     return ikb
 
