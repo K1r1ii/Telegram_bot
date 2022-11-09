@@ -13,9 +13,17 @@ async def db_start():
     db.commit()
 
 #создаие шаблона под одно объявление
-async def create_ads(count_ad):
-    cursor.execute('INSERT INTO ads VALUES(?, ?, ?, ?, ?)', (count_ad, '', '', '', ''))
-    db.commit()
+async def create_ads():
+    numbers = cursor.execute('SELECT number FROM ads').fetchall()
+    numbers_list = []
+    for i in numbers:
+        numbers_list.append(int(i[0]))
+    if numbers_list == []:
+        cursor.execute('INSERT INTO ads VALUES(?, ?, ?, ?, ?)', (1, '', '', '', ''))
+        db.commit()
+    else:
+        cursor.execute('INSERT INTO ads VALUES(?, ?, ?, ?, ?)', (int(numbers_list[-1]) + 1, '', '', '', ''))
+        db.commit()
 
 
 #создаем профиль (таблица с колонками id, фото, имя, возраст, описание)
@@ -24,18 +32,38 @@ async def create_profile(user_id):
     if not user:
         cursor.execute('INSERT INTO profile VALUES(?, ?, ?, ?, ?, ?, ?)', (user_id, '', '', '', '', '', ''))
         db.commit()
+count_test = 0
 
 #добавление объявления
-async def edit_ads(state, count_ad):
-    async with state.proxy() as data:
-        cursor.execute("UPDATE ads SET photo = '{}', description = '{}', price = '{}', count = '{}' WHERE number = '{}'".format(
-            data['photo_ads'],
-            data['desc_ads'],
-            data['price_ads'],
-            data['count_product_ads'],
-            count_ad
-        ))
-        db.commit()
+async def edit_ads(state):
+    global count_test
+    numbers = cursor.execute('SELECT number FROM ads').fetchall()
+    numbers_list = []
+    for i in numbers:
+        numbers_list.append(int(i[0]))
+
+    if len(numbers_list) == 1:
+        async with state.proxy() as data:
+            cursor.execute(
+                "UPDATE ads SET photo = '{}', description = '{}', price = '{}', count = '{}' WHERE number = '{}'".format(
+                    data['photo_ads'],
+                    data['desc_ads'],
+                    data['price_ads'],
+                    data['count_product_ads'],
+                    1
+                ))
+            db.commit()
+    else:
+        async with state.proxy() as data:
+            cursor.execute(
+                "UPDATE ads SET photo = '{}', description = '{}', price = '{}', count = '{}' WHERE number = '{}'".format(
+                    data['photo_ads'],
+                    data['desc_ads'],
+                    data['price_ads'],
+                    data['count_product_ads'],
+                    numbers_list[-1]
+                ))
+            db.commit()
 
 #добавление профиля, если такого не существует
 async def edit_profile(state, user_id, score):
@@ -123,6 +151,10 @@ def change_data(count_ads, user_id):
 def price(count_ads):
     price = cursor.execute('SELECT price FROM ads WHERE number == {key}'.format(key=count_ads)).fetchone()
     return int(price[0])
+
+def name(user_id):
+    name = cursor.execute('SELECT name FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()
+    return name[0]
 
 
 

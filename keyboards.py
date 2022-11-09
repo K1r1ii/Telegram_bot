@@ -9,6 +9,13 @@ def get_keyboard() -> ReplyKeyboardMarkup:
     kb.add(b1).add(b2).add(b3)
     return kb
 
+def get_admin_keyboard() -> ReplyKeyboardMarkup:
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    b1 = KeyboardButton('Создать объявление')
+    b2 = KeyboardButton('Начислить баллы')
+    kb.add(b1).add(b2)
+    return kb
+
 #создания inline клавиатуры(кнопки закреплены за конкретным сообщением)
 #inline кнопка для рекомендаций, содержит ссылку на рекомендуемого пользователя
 def get_inline_keyboard_rec(url_tg) -> InlineKeyboardMarkup:

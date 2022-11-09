@@ -36,21 +36,23 @@ class Ads_states_group(StatesGroup):
     count_product = State()
 
 #######################################   Обработчики вспомогательных команд   ####################################
+
 #действия при команде старт
 count_start = 0
-# id = '5046504652'
-# @dp.message_handler()
-# async def test(message: types.Message):
-#     await bot.send_message(id, text='Привет')
+admin_id = 1080788360 #id администратора бота(HR)
 
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message) -> None:
-    global count_start
-    if count_start == 0:
-        first_salary(user_id=message.from_user.id)
-        count_start += 1
-    await message.answer(text = START, reply_markup=get_keyboard())
-    await message.delete()
+    if message.from_user.id == admin_id:
+        global count_start
+        if count_start == 0:
+            first_salary(user_id=message.from_user.id)
+            count_start += 1
+        await message.answer(text=START_ADMIN, reply_markup=get_admin_keyboard())
+        await message.delete()
+    else:
+        await message.answer(text=START, reply_markup=get_keyboard())
+        await message.delete()
 
 #отмена заполнения анкеты, сброс состояний
 @dp.message_handler(Text(equals='Отменить заполнение анкеты', ignore_case=True), state='*')
@@ -66,26 +68,35 @@ async def cancel_command(message: types.Message, state: FSMContext) -> None:
 #отмена заполнения объявления, сброс состояний
 @dp.message_handler(Text(equals='Отменить заполнение объявления', ignore_case=True), state='*')
 async def cancel_command(message: types.Message, state: FSMContext) -> None:
-    current_state = await state.get_state()
-    if current_state is None:
-        return
-    await message.answer(text='Заполнение объявления отменено',
-                         reply_markup=get_keyboard())
-    await delete_ads(count_ad=count_ad)
-    await state.finish()
+    if message.from_user.id == admin_id:
+        current_state = await state.get_state()
+        if current_state is None:
+            return
+        await message.answer(text='Заполнение объявления отменено',
+                             reply_markup=get_keyboard())
+        await delete_ads(count_ad=count_ad)
+        await state.finish()
+    else:
+        await message.answer(text='У вас недостаточно прав для этой операции(')
 
 #функция удаления объявления
 @dp.message_handler(commands=['deleteads'])
 async def delete_command_ads(message: types.Message):
-    global count_ad
-    await delete_ads(count_ad=count_ad)
-    await message.answer(text='Ваше объявление удалено',
-                         reply_markup=get_keyboard())
-    count_ad = 0
+    if message.from_user.id == admin_id:
+        global count_ad
+        await delete_ads(count_ad=count_ad)
+        await message.answer(text='Ваше объявление удалено',
+                             reply_markup=get_keyboard())
+        count_ad = 0
+    else:
+        await message.answer(text='у вас недостаточно прав для этой операции(')
 
 @dp.message_handler(commands=['deleteadsall'])
 async def delete_ads_all_cmd(message: types.Message):
-    await delete_all_ads()
+    if message.from_user.id == admin_id:
+        await delete_all_ads()
+    else:
+        await message.answer('У вас недостаточно прав для этой операции(')
 
 
 #функция удаления профиля
@@ -172,21 +183,28 @@ async def rec_command_ads(message: types.Message):
 #действие при нажатии callback кнопки ДОРАБОТАТЬ!!!
 @dp.callback_query_handler(text='buy')
 async def buy_ads(call: types.CallbackQuery):
-    await call.message.answer('Покупка совершена!')
-    change_data(count_ads=count_ads, user_id=call.from_user.id)
-    await call.message.answer(f'С вашего счета списано {price(count_ads=count_ads)}')
-
+    now_balans = balans_inf(user_id=call.from_user.id)
+    if now_balans >= price(count_ads=count_ads):
+        await call.message.answer('Покупка совершена!')
+        change_data(count_ads=count_ads, user_id=call.from_user.id)
+        await call.message.answer(f'С вашего счета списано {price(count_ads=count_ads)}')
+        await bot.send_message(admin_id, f'{name(user_id=call.from_user.id)} купил товар!')
+    else:
+        await call.message.answer('У вас недостаточно средств')
 
 #######################################   Создание объявления   ####################################
 #СДЕЛАТЬ НОВЫЙ КЛЮЧ ДЛЯ ТАБЛИЦЫ ОБЪЯВЛЕНИЙ (нужно избавиться от счетчиков в коде)
 count_ad = 0
-@dp.message_handler(Text(equals='Объявление', ignore_case=True), state=None)
+@dp.message_handler(Text(equals='Создать объявление', ignore_case=True), state=None)
 async def start_ad(message: types.Message, state: FSMContext) -> None:
-    global count_ad
-    count_ad += 1
-    await Ads_states_group.photo.set()
-    await create_ads(count_ad=count_ad)
-    await message.answer('Отправь фото товара(услуги)', reply_markup=get_cancel_ads())
+    if message.from_user.id == admin_id:
+        global count_ad
+        count_ad += 1
+        await Ads_states_group.photo.set()
+        await create_ads()
+        await message.answer('Отправь фото товара(услуги)', reply_markup=get_cancel_ads())
+    else:
+        await message.answer('У вас недостаточно прав для этой операции(')
 
 @dp.message_handler(lambda message: not message.photo, state=Anketa_states_group.photo)
 async def check_photo_ads(message: types.Message):
@@ -223,7 +241,7 @@ async def load_count_product_ads(message: types.Message, state: FSMContext):
                          photo=data['photo_ads'],
                          caption=f'{data["desc_ads"]}\nЦена: {data["price_ads"]}\nКоличество: {data["count_product_ads"]}'
                          )
-    await edit_ads(state, count_ad=count_ad)
+    await edit_ads(state)
     await state.finish()
 
 
