@@ -5,7 +5,7 @@ def get_keyboard() -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     b1 = KeyboardButton('Заполнить анкету')
     b2 = KeyboardButton('Найти друга!')
-    b3 = KeyboardButton('Мой баланс')
+    b3 = KeyboardButton('Посмотреть объявление')
     kb.add(b1).add(b2).add(b3)
     return kb
 
@@ -23,13 +23,6 @@ def get_inline_keyboard_rec(url_tg) -> InlineKeyboardMarkup:
     ib1 = InlineKeyboardButton(text='Начать общаться!', url=url_tg)
     ikb.add(ib1)
     return ikb
-
-#inline кнопка для перехода к покупке товара
-# def get_inline_keyboard_ads(admin_url) -> InlineKeyboardMarkup:
-#     ikb = InlineKeyboardMarkup(row_width=2)
-#     ib1 = InlineKeyboardButton(text='Купить!', url=admin_url)
-#     ikb.add(ib1)
-#     return ikb
 
 def get_callback_keyboard() -> InlineKeyboardMarkup:
     ikb = InlineKeyboardMarkup(row_width=2)

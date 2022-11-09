@@ -43,14 +43,17 @@ admin_id = 1080788360 #id администратора бота(HR)
 
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message) -> None:
+    global count_start
     if message.from_user.id == admin_id:
-        global count_start
         if count_start == 0:
             first_salary(user_id=message.from_user.id)
             count_start += 1
         await message.answer(text=START_ADMIN, reply_markup=get_admin_keyboard())
         await message.delete()
     else:
+        if count_start == 0:
+            first_salary(user_id=message.from_user.id)
+            count_start += 1
         await message.answer(text=START, reply_markup=get_keyboard())
         await message.delete()
 
@@ -73,7 +76,7 @@ async def cancel_command(message: types.Message, state: FSMContext) -> None:
         if current_state is None:
             return
         await message.answer(text='Заполнение объявления отменено',
-                             reply_markup=get_keyboard())
+                             reply_markup=get_admin_keyboard())
         await delete_ads(count_ad=count_ad)
         await state.finish()
     else:
@@ -194,12 +197,10 @@ async def buy_ads(call: types.CallbackQuery):
 
 #######################################   Создание объявления   ####################################
 #СДЕЛАТЬ НОВЫЙ КЛЮЧ ДЛЯ ТАБЛИЦЫ ОБЪЯВЛЕНИЙ (нужно избавиться от счетчиков в коде)
-count_ad = 0
+
 @dp.message_handler(Text(equals='Создать объявление', ignore_case=True), state=None)
 async def start_ad(message: types.Message, state: FSMContext) -> None:
     if message.from_user.id == admin_id:
-        global count_ad
-        count_ad += 1
         await Ads_states_group.photo.set()
         await create_ads()
         await message.answer('Отправь фото товара(услуги)', reply_markup=get_cancel_ads())
@@ -236,16 +237,14 @@ async def load_name_ads(message: types.Message, state: FSMContext):
 async def load_count_product_ads(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['count_product_ads'] = message.text
-    await message.answer(text='Объявление готово')
+    await message.answer(text='Объявление готово',
+                         reply_markup=get_admin_keyboard())
     await bot.send_photo(message.from_user.id,
                          photo=data['photo_ads'],
                          caption=f'{data["desc_ads"]}\nЦена: {data["price_ads"]}\nКоличество: {data["count_product_ads"]}'
                          )
     await edit_ads(state)
     await state.finish()
-
-
-
 
 #######################################   Создание Анкеты   ####################################
 
