@@ -10,6 +10,7 @@ async def db_start():
 
     cursor.execute('CREATE TABLE IF NOT EXISTS profile(user_id TEXT PRIMARY KEY, photo TEXT, name TEXT, age TEXT, description TEXT, url_tg TEXT, score TEXT)')
     cursor.execute('CREATE TABLE IF NOT EXISTS ads(number TEXT PRIMARY KEY, photo TEXT, description TEXT, price TEXT, count TEXT)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS password(num TEXT PRIMARY KEY, pass TEXT)')
     db.commit()
 
 #создаие шаблона под одно объявление
@@ -25,6 +26,28 @@ async def create_ads():
         cursor.execute('INSERT INTO ads VALUES(?, ?, ?, ?, ?)', (int(numbers_list[-1]) + 1, '', '', '', ''))
         db.commit()
 
+#создание бд с паролем
+async def create_password():
+    pass_chek = cursor.execute("SELECT num FROM password").fetchall()
+    pass_chek_list = []
+
+    for i in pass_chek:
+        pass_chek_list.append(i[0])
+
+    if pass_chek_list == []:
+        print('test1')
+        cursor.execute('INSERT INTO password VALUES(?, ?)', (1, 'admin'))
+        db.commit()
+
+# смена пароля в бд
+def change_password(password):
+    cursor.execute('UPDATE password SET pass = "{}" WHERE num == {}'.format(password, str(1)))
+    db.commit()
+    return 'Пароль успешно изменен!'
+
+#текущий пароль
+def current_pass():
+    return cursor.execute('SELECT pass FROM password WHERE num == {key}'.format(key=1)).fetchone()[0]
 
 #создаем профиль (таблица с колонками id, фото, имя, возраст, описание)
 async def create_profile(user_id):
@@ -41,29 +64,16 @@ async def edit_ads(state):
     numbers_list = []
     for i in numbers:
         numbers_list.append(int(i[0]))
-
-    if len(numbers_list) == 1:
-        async with state.proxy() as data:
-            cursor.execute(
-                "UPDATE ads SET photo = '{}', description = '{}', price = '{}', count = '{}' WHERE number = '{}'".format(
-                    data['photo_ads'],
-                    data['desc_ads'],
-                    data['price_ads'],
-                    data['count_product_ads'],
-                    1
-                ))
-            db.commit()
-    else:
-        async with state.proxy() as data:
-            cursor.execute(
-                "UPDATE ads SET photo = '{}', description = '{}', price = '{}', count = '{}' WHERE number = '{}'".format(
-                    data['photo_ads'],
-                    data['desc_ads'],
-                    data['price_ads'],
-                    data['count_product_ads'],
-                    numbers_list[-1]
-                ))
-            db.commit()
+    async with state.proxy() as data:
+        cursor.execute(
+            "UPDATE ads SET photo = '{}', description = '{}', price = '{}', count = '{}' WHERE number = '{}'".format(
+                data['photo_ads'],
+                data['desc_ads'],
+                data['price_ads'],
+                data['count_product_ads'],
+                numbers_list[-1]
+            ))
+        db.commit()
 
 #добавление профиля, если такого не существует
 async def edit_profile(state, user_id, score):
@@ -142,22 +152,30 @@ def rec_ads(count_ads):
     else:
         return 'Ты посмотрел все объявления, теперь они пойдут заново'
 
+
+
+#получение значения цены для конкретного товара
+def price(count_ads):
+    global price
+    ads = cursor.execute('SELECT number FROM ads').fetchall()  # все номера объявлений
+    ads_list = []  # список из номеров объяявлений
+    for i in ads:
+        ads_list.append(int(i[0]))
+    len(ads_list)
+    price = cursor.execute('SELECT price FROM ads WHERE number == {key}'.format(key=str(ads_list[count_ads]))).fetchone()
+    return int(price[0])
+
+#изменение информации о баллах в бд после покупки
 def change_data(count_ads, user_id):
-    price = cursor.execute('SELECT price FROM ads WHERE number == {key}'.format(key=count_ads)).fetchone()
+    global price
     now_score = int(cursor.execute('SELECT score FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()[0])
     cursor.execute('UPDATE profile SET score = "{}" WHERE user_id = {}'.format(str(now_score - int(price[0])), user_id))
     db.commit()
 
-def price(count_ads):
-    price = cursor.execute('SELECT price FROM ads WHERE number == {key}'.format(key=count_ads)).fetchone()
-    return int(price[0])
-
+#получение имени пользователя с заданным id
 def name(user_id):
     name = cursor.execute('SELECT name FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()
     return name[0]
-
-
-
 
 #обновление количества очков при ответе на вопрос
 def answer_question(user_id, count_zp):
@@ -178,6 +196,30 @@ def first_salary(user_id):
     cursor.execute('UPDATE profile SET score = "{}" WHERE user_id = {}'.format(start_summ, user_id))
     db.commit()
 
+#начисление заданного кол-ва баллов конкретному пользоватлею
+def salary(user_id, summ):
+    now_score = int(cursor.execute('SELECT score FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()[0])
+    cursor.execute('UPDATE profile SET score = "{}" WHERE user_id = {}'.format(str(now_score + summ), user_id))
+    db.commit()
+
+#поиск пользователя в бд по его имени
+def find_user(name_user):
+    users = cursor.execute('SELECT user_id FROM profile').fetchall()
+
+    users_list = []
+    name_users = []
+    f_name = False
+    for i in users:
+        users_list.append(int(i[0]))
+    for i in users_list:
+        name_users.append(cursor.execute('SELECT name FROM profile WHERE user_id == {key}'.format(key=i)).fetchone()[0])
+    for i in name_users:
+        if i == name_user:
+            f_name = True
+            return users_list[name_users.index(i)]
+    if f_name == False:
+        return 'Пользователь не найден'
+
 #обращение к бд за информацией о балансе
 def balans_inf(user_id):
     inf = int(cursor.execute('SELECT score FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()[0])
@@ -188,10 +230,47 @@ async def delete_profile(user_id):
     cursor.execute('DELETE from profile WHERE user_id == {key}'.format(key=user_id))
     db.commit()
 
+#изменение количества товара
+async def count_product(count_ads):
+    ads = cursor.execute('SELECT number FROM ads').fetchall()  # все номера объявлений
+    ads_list = []  # список из номеров объяявлений
+    for i in ads:
+        ads_list.append(int(i[0]))
+    count = cursor.execute('SELECT count FROM ads WHERE number == {key}'.format(key=str(ads_list[count_ads]))).fetchone()
+    if int(count[0]) == 1:
+        delete_ads(count_ads)
+    else:
+        print(count[0])
+        cursor.execute('UPDATE ads SET count = "{}" WHERE number == {}'.format(str(int(count[0]) - 1), ads_list[count_ads]))
+        print(str(int(count[0]) - 1), count_ads)
+        db.commit()
+
+
 #удаление объявления
-async def delete_ads(count_ad):
-    cursor.execute('DELETE from ads WHERE number == {key}'.format(key=count_ad))
-    db.commit()
+def delete_ads(count_ad):
+    ads = cursor.execute('SELECT number FROM ads').fetchall()
+    ads_list = []
+    f_num = False
+    for i in ads:
+        ads_list.append(i[0])
+    print(len(ads_list))
+    for i in ads_list:
+        if int(i) == count_ad:
+            cursor.execute('DELETE from ads WHERE number == {key}'.format(key=count_ad))
+            db.commit()
+            f_num = True
+            return 'Объявление удалено'
+    if not (f_num):
+       return "Объявления с таким номером не существует"
+
+def num_current_ads():
+    ads = cursor.execute('SELECT number FROM ads').fetchall()
+    ads_list = []
+    for i in ads:
+        ads_list.append(i[0])
+    return int(ads_list[-1])
+
+#удаление ВСЕХ объявлений
 async def delete_all_ads():
     cursor.execute("DELETE from ads")
     db.commit()

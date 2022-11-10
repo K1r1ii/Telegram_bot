@@ -35,15 +35,33 @@ class Ads_states_group(StatesGroup):
     price = State()
     count_product = State()
 
-#######################################   Обработчики вспомогательных команд   ####################################
+#начисление баллов
+class Earn_points(StatesGroup):
+    name_user = State()
+    count_points = State()
 
+#создание пароля
+class Entrance(StatesGroup):
+    password = State()
+
+#для смены пароля
+class New_password(StatesGroup):
+    old_pass = State()
+    new_pass = State()
+
+#удаление объявлений
+class Delete_ads(StatesGroup):
+    num_ads = State()
+
+#######################################   Обработчики вспомогательных команд   ####################################
 #действия при команде старт
 count_start = 0
-admin_id = 1080788360 #id администратора бота(HR)
+admin_id = 11111111111 #id администратора бота(HR)
 
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message) -> None:
     global count_start
+    await create_password()
     if message.from_user.id == admin_id:
         if count_start == 0:
             first_salary(user_id=message.from_user.id)
@@ -77,30 +95,10 @@ async def cancel_command(message: types.Message, state: FSMContext) -> None:
             return
         await message.answer(text='Заполнение объявления отменено',
                              reply_markup=get_admin_keyboard())
-        await delete_ads(count_ad=count_ad)
+        c = delete_ads(num_current_ads())
         await state.finish()
     else:
         await message.answer(text='У вас недостаточно прав для этой операции(')
-
-#функция удаления объявления
-@dp.message_handler(commands=['deleteads'])
-async def delete_command_ads(message: types.Message):
-    if message.from_user.id == admin_id:
-        global count_ad
-        await delete_ads(count_ad=count_ad)
-        await message.answer(text='Ваше объявление удалено',
-                             reply_markup=get_keyboard())
-        count_ad = 0
-    else:
-        await message.answer(text='у вас недостаточно прав для этой операции(')
-
-@dp.message_handler(commands=['deleteadsall'])
-async def delete_ads_all_cmd(message: types.Message):
-    if message.from_user.id == admin_id:
-        await delete_all_ads()
-    else:
-        await message.answer('У вас недостаточно прав для этой операции(')
-
 
 #функция удаления профиля
 @dp.message_handler(commands=['deleteprofile'])
@@ -113,6 +111,10 @@ async def delete_command(message: types.Message):
 @dp.message_handler(commands=['help'])
 async def help_command(message: types.Message):
     await message.reply(HELP_LIST, parse_mode='HTML')
+
+@dp.message_handler(commands=['help_admin'])
+async def help_admin_cmd(message: types.Message):
+    await message.reply(HELP_ADMIN_LIST, parse_mode='HTML')
 
 #вызов описания бота
 @dp.message_handler(commands=['description'])
@@ -137,8 +139,6 @@ async def questions(message: types.Message):
 @dp.message_handler(Text(equals='Мой баланс', ignore_case=True))
 async def balans(message: types.Message):
     await bot.send_message(message.from_user.id, text=balans_inf(user_id=message.from_user.id))
-
-
 
 #######################################   Рекомендации   ####################################
 #функция, отвечающая за рекомендации другим пользователям
@@ -187,11 +187,12 @@ async def rec_command_ads(message: types.Message):
 @dp.callback_query_handler(text='buy')
 async def buy_ads(call: types.CallbackQuery):
     now_balans = balans_inf(user_id=call.from_user.id)
-    if now_balans >= price(count_ads=count_ads):
+    if now_balans >= price(count_ads=count_ads - 1):
         await call.message.answer('Покупка совершена!')
-        change_data(count_ads=count_ads, user_id=call.from_user.id)
-        await call.message.answer(f'С вашего счета списано {price(count_ads=count_ads)}')
-        await bot.send_message(admin_id, f'{name(user_id=call.from_user.id)} купил товар!')
+        change_data(count_ads=count_ads - 1 , user_id=call.from_user.id)
+        await call.message.answer(f'С вашего счета списано {price(count_ads=count_ads - 1)}')
+        await bot.send_message(admin_id, f'{name(user_id=call.from_user.id)} купил товар номер {count_ads - 1}!')
+        await count_product(count_ads - 1)
     else:
         await call.message.answer('У вас недостаточно средств')
 
@@ -309,6 +310,100 @@ async def load_url(message: types.Message, state: FSMContext):
     await edit_profile(state, user_id=message.from_user.id, score=start_score)
     await state.finish()
 
+#######################################   Вход в акк админа   ####################################
+
+@dp.message_handler(Text(equals='Войти', ignore_case=True), state=None)
+async def enter(message: types.Message,  state: FSMContext) -> None:
+    await Entrance.password.set()
+    await message.answer('Введите пароль')
+
+@dp.message_handler(state=Entrance.password)
+async def check_password(message: types.Message, state: FSMContext):
+    global admin_id
+
+    if message.text == current_pass():
+        await message.answer(f'{name(user_id=message.from_user.id)}, вы вошли в аккаунт администратора, введите "/help_admin", чтобы подробнее узнать о ваших возможностях',
+                             reply_markup=get_admin_keyboard())
+        admin_id = message.from_user.id
+    else:
+        await message.answer('Введен неверный пароль')
+    await state.finish()
+
+#######################################   Смена пароля для аккаунта админа   ####################################
+
+@dp.message_handler(Text(equals='Сменить пароль', ignore_case=True), state=None)
+async def change_password_cmd(message: types.Message) -> None:
+    if message.from_user.id == admin_id:
+        await New_password.old_pass.set()
+        await message.answer('Введите старый пароль')
+    else:
+        await message.answer('У вас недостаточно прав для этой операции(')
+
+@dp.message_handler(state=New_password.old_pass)
+async def check_old_pass(message: types.Message, state: FSMContext):
+    if message.text == current_pass():
+        await New_password.next()
+        await message.answer('Введите новый пароль')
+    else:
+        await message.answer('Введен неверный пароль')
+        await state.finish()
+
+@dp.message_handler(state=New_password.new_pass)
+async def new_pass_cmd(message: types.Message, state: FSMContext):
+    await message.answer(text=str(change_password(message.text)))
+    await state.finish()
+
+
+#######################################   Начисление баллов   ####################################
+
+@dp.message_handler(Text(equals='Начислить баллы', ignore_case=True), state=None)
+async def points_for_user(message: types.Message) -> None:
+    if message.from_user.id == admin_id:
+        await Earn_points.name_user.set()
+        await message.answer('Напиши имя того, кому хотел бы начислить баллы(имя указанное в его анкете)')
+    else:
+        await message.answer('У вас недостаточно прав для этой операции(')
+
+@dp.message_handler(state=Earn_points.name_user)
+async def load_name_user(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['name_user'] = message.text
+    await Earn_points.next()
+    await message.answer('Сколько баллов начислить?')
+
+@dp.message_handler(state=Earn_points.count_points)
+async def load_count_points(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['count_points'] = int(message.text)
+    if type(find_user(data['name_user'])) == str:
+        await message.answer(text=find_user(data['name_user']))
+    else:
+        salary(user_id=find_user(data['name_user']), summ=data['count_points'])
+        await message.answer(text='баллы начислены!')
+        await bot.send_message(find_user(data['name_user']), text=f'Вам начислено {data["count_points"]} баллов!')
+    await state.finish()
+
+#######################################   удаление объявления по его номеру   ####################################
+
+@dp.message_handler(Text(equals='Удалить объявление', ignore_case=True), state=None)
+async def del_ads_cmd(message: types.Message) -> None:
+    if message.from_user.id == admin_id:
+        await Delete_ads.num_ads.set()
+        await message.answer('Напиши номер объявления, которое хочешь удалить')
+    else:
+        await message.answer('У вас недостаточно прав для этой операции(')
+
+@dp.message_handler(state=Delete_ads.num_ads)
+async def load_num(message: types.Message, state: FSMContext):
+    await message.answer(str(delete_ads(int(message.text))))
+    await state.finish()
+
+@dp.message_handler(commands=['deleteadsall'])
+async def delete_ads_all_cmd(message: types.Message):
+    if message.from_user.id == admin_id:
+        await delete_all_ads()
+    else:
+        await message.answer('У вас недостаточно прав для этой операции(')
 
 #######################################   Бот для общего чата(не доделано)   ####################################
 #функция для приема ответов пользователя, ответ дается с спецсимволом в начале
