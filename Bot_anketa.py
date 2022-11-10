@@ -140,6 +140,25 @@ async def questions(message: types.Message):
 async def balans(message: types.Message):
     await bot.send_message(message.from_user.id, text=balans_inf(user_id=message.from_user.id))
 
+
+#смена клавиатуры для админа
+@dp.message_handler(commands=['admin_keyboard'])
+async def key(message: types.Message):
+    if message.from_user.id == admin_id:
+        await message.answer('Вы перешли на клавиатуру для администратора!',
+                             reply_markup=get_admin_keyboard())
+    else:
+        await message.answer('У вас недостаточно прав для этой операции(')
+
+@dp.message_handler(commands=['user_keyboard'])
+async def key(message: types.Message):
+    if message.from_user.id == admin_id:
+        await message.answer('Вы перешли на клавиатуру для пользователя!',
+                             reply_markup=get_keyboard())
+    else:
+        await message.answer('У вас недостаточно прав для этой операции(')
+
+
 #######################################   Рекомендации   ####################################
 #функция, отвечающая за рекомендации другим пользователям
 #счетчик count нужен для того, чтобы избежать отправки анкеты, которая уже была отправлена
