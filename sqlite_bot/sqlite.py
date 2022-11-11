@@ -154,6 +154,11 @@ def rec_ads(count_ads):
 
 
 
+def all_db():
+    data_base = cursor.execute('SELECT name, age, description, url_tg FROM profile').fetchall()
+    return data_base
+
+
 #получение значения цены для конкретного товара
 def price(count_ads):
     global price
@@ -175,7 +180,10 @@ def change_data(count_ads, user_id):
 #получение имени пользователя с заданным id
 def name(user_id):
     name = cursor.execute('SELECT name FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()
-    return name[0]
+    if name is None:
+        return 'Вы не авторизованы, заполните анкету'
+    else:
+        return name[0]
 
 #обновление количества очков при ответе на вопрос
 def answer_question(user_id, count_zp):
@@ -236,14 +244,25 @@ async def count_product(count_ads):
     ads_list = []  # список из номеров объяявлений
     for i in ads:
         ads_list.append(int(i[0]))
-    count = cursor.execute('SELECT count FROM ads WHERE number == {key}'.format(key=str(ads_list[count_ads]))).fetchone()
+    count = cursor.execute('SELECT count FROM ads WHERE number == {key}'.format(key=str(count_ads))).fetchone()
     if int(count[0]) == 1:
         delete_ads(count_ads)
     else:
         print(count[0])
-        cursor.execute('UPDATE ads SET count = "{}" WHERE number == {}'.format(str(int(count[0]) - 1), ads_list[count_ads]))
+        cursor.execute('UPDATE ads SET count = "{}" WHERE number == {}'.format(str(int(count[0]) - 1), count_ads))
         print(str(int(count[0]) - 1), count_ads)
         db.commit()
+
+#получение номера товара
+def num(count_ads):
+    ads = cursor.execute('SELECT number FROM ads').fetchall() #все номера объявлений
+    ads_list = []   #список из номеров объяявлений
+    for i in ads:
+        ads_list.append(int(i[0]))
+
+    if len(ads_list) > count_ads:
+        ad_rec = ads_list[count_ads]
+        return ad_rec
 
 
 #удаление объявления

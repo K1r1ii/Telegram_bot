@@ -6,6 +6,7 @@ from aiogram.dispatcher.filters import Text
 from keyboards import *
 from config import *
 from sqlite_bot.sqlite import *
+from aiogram.types import InputFile
 
 #запуск базы данных(создание)
 async def on_startup(_):
@@ -140,6 +141,26 @@ async def questions(message: types.Message):
 async def balans(message: types.Message):
     await bot.send_message(message.from_user.id, text=balans_inf(user_id=message.from_user.id))
 
+#отправка все бд в текстовом формате админу
+@dp.message_handler(Text(equals='Получить базу данных', ignore_case=True))
+async def all_db_cmd(message: types.Message):
+    if message.from_user.id == admin_id:
+        with open('all_db.txt', 'w', encoding='utf-8') as f:
+            db = all_db()
+            db_list = []
+            db_list_all = []
+            for i in range(len(db)):
+                for j in range(len(db[i])):
+                    db_list.append(db[i][j])
+                db_list_all.append(db_list)
+                db_list = []
+            for i in range(len(db_list_all)):
+                for j in range(len(db_list_all[i])):
+                    f.write(''.join(db_list_all[i][j]) + ' ')
+                f.write('\n')
+        await message.answer_document(InputFile('all_db.txt'))
+    else:
+        await message.answer('У вас недостаточно прав для этой операции(')
 
 #смена клавиатуры для админа
 @dp.message_handler(commands=['admin_keyboard'])
@@ -202,7 +223,7 @@ async def rec_command_ads(message: types.Message):
                              )
         count_ads += 1
 
-#действие при нажатии callback кнопки ДОРАБОТАТЬ!!!
+#действие при нажатии callback кнопки
 @dp.callback_query_handler(text='buy')
 async def buy_ads(call: types.CallbackQuery):
     now_balans = balans_inf(user_id=call.from_user.id)
@@ -210,8 +231,14 @@ async def buy_ads(call: types.CallbackQuery):
         await call.message.answer('Покупка совершена!')
         change_data(count_ads=count_ads - 1 , user_id=call.from_user.id)
         await call.message.answer(f'С вашего счета списано {price(count_ads=count_ads - 1)}')
-        await bot.send_message(admin_id, f'{name(user_id=call.from_user.id)} купил товар номер {count_ads - 1}!')
-        await count_product(count_ads - 1)
+        await bot.send_message(admin_id, f'{name(user_id=call.from_user.id)} купил  этот товар!')
+        m = rec_ads(count_ads - 1)
+        await bot.send_photo(call.from_user.id,
+                             photo=m[1],
+                             caption=f'{m[2]}\nЦена: {m[3]}\nКоличество: {m[4]}'
+                             )
+        await count_product(num(count_ads=count_ads-1))
+        print(num(count_ads=count_ads-1))
     else:
         await call.message.answer('У вас недостаточно средств')
 
@@ -341,9 +368,13 @@ async def check_password(message: types.Message, state: FSMContext):
     global admin_id
 
     if message.text == current_pass():
-        await message.answer(f'{name(user_id=message.from_user.id)}, вы вошли в аккаунт администратора, введите "/help_admin", чтобы подробнее узнать о ваших возможностях',
-                             reply_markup=get_admin_keyboard())
-        admin_id = message.from_user.id
+        admin_name = name(user_id=message.from_user.id)
+        if admin_name == 'Вы не авторизованы, заполните анкету':
+            await message.answer(admin_name)
+        else:
+            await message.answer(f'{admin_name}, вы вошли в аккаунт администратора, введите "/help_admin", чтобы подробнее узнать о ваших возможностях',
+                                 reply_markup=get_admin_keyboard())
+            admin_id = message.from_user.id
     else:
         await message.answer('Введен неверный пароль')
     await state.finish()
