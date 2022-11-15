@@ -6,14 +6,34 @@ def get_keyboard() -> ReplyKeyboardMarkup:
     b1 = KeyboardButton('Заполнить анкету')
     b2 = KeyboardButton('Найти друга!')
     b3 = KeyboardButton('Посмотреть объявление')
-    kb.add(b1).add(b2).add(b3)
+    b4 = KeyboardButton('Мой баланс')
+    kb.row(b1, b2)
+    kb.row(b3, b4)
+    return kb
+
+#пользоватлеьская клавиатура, но для админа (+ переход обратно)
+def get_keyboard_user_admin() -> ReplyKeyboardMarkup:
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    b1 = KeyboardButton('Заполнить анкету')
+    b2 = KeyboardButton('Найти друга!')
+    b3 = KeyboardButton('Посмотреть объявление')
+    b4 = KeyboardButton('Мой баланс')
+    b5 = KeyboardButton('Клавиатура админ')
+    kb.row(b1, b2)
+    kb.row(b3, b4)
+    kb.row(b5)
     return kb
 
 def get_admin_keyboard() -> ReplyKeyboardMarkup:
-    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
     b1 = KeyboardButton('Создать объявление')
     b2 = KeyboardButton('Начислить баллы')
-    kb.add(b1).add(b2)
+    b3 = KeyboardButton('Сменить пароль')
+    b4 = KeyboardButton('Клавиатура пользователь')
+    b5 = KeyboardButton('Получить базу данных')
+    kb.row(b1, b2)
+    kb.row(b3, b4)
+    kb.row(b5)
     return kb
 
 #создания inline клавиатуры(кнопки закреплены за конкретным сообщением)

@@ -185,6 +185,10 @@ def name(user_id):
     else:
         return name[0]
 
+def tg_url(user_id):
+    tg = cursor.execute('SELECT url_tg FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()
+    return tg[0]
+
 #обновление количества очков при ответе на вопрос
 def answer_question(user_id, count_zp):
     if count_zp == 0:
@@ -200,7 +204,7 @@ def waste(user_id):
 
 #первое пополнение при вызове команды /start
 def first_salary(user_id):
-    start_summ = 50
+    start_summ = 100
     cursor.execute('UPDATE profile SET score = "{}" WHERE user_id = {}'.format(start_summ, user_id))
     db.commit()
 
@@ -230,8 +234,11 @@ def find_user(name_user):
 
 #обращение к бд за информацией о балансе
 def balans_inf(user_id):
-    inf = int(cursor.execute('SELECT score FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()[0])
-    return inf
+    inf = cursor.execute('SELECT score FROM profile WHERE user_id == {key}'.format(key=user_id)).fetchone()
+    if inf is None:
+        return -1
+    else:
+        return int(inf[0])
 
 #удаление профиля
 async def delete_profile(user_id):
@@ -248,9 +255,7 @@ async def count_product(count_ads):
     if int(count[0]) == 1:
         delete_ads(count_ads)
     else:
-        print(count[0])
         cursor.execute('UPDATE ads SET count = "{}" WHERE number == {}'.format(str(int(count[0]) - 1), count_ads))
-        print(str(int(count[0]) - 1), count_ads)
         db.commit()
 
 #получение номера товара
@@ -272,7 +277,6 @@ def delete_ads(count_ad):
     f_num = False
     for i in ads:
         ads_list.append(i[0])
-    print(len(ads_list))
     for i in ads_list:
         if int(i) == count_ad:
             cursor.execute('DELETE from ads WHERE number == {key}'.format(key=count_ad))
@@ -282,6 +286,7 @@ def delete_ads(count_ad):
     if not (f_num):
        return "Объявления с таким номером не существует"
 
+#получение списка текущих номеров объявлений
 def num_current_ads():
     ads = cursor.execute('SELECT number FROM ads').fetchall()
     ads_list = []
