@@ -55,3 +55,13 @@ DESC_REMINDER = '''
 Важно! При перезапуске бота напоминания стираются.
 Важно! Любые напоминания не текстового формата (фото, видео, стикеры и т.д.) будут проигнорированы
 '''
+
+sticker_id = [
+    'CAACAgIAAxkBAAEGdVJjdqB8T-QM0IwD0uwrnmuBvAoHPQACQyUAAlwwoUsLBOymdCE4hysE',
+    'CAACAgIAAxkBAAEGdVRjdqCQ9zUK3UAwm2OFlWJLKFJqUAACoSIAAt33oEtnl1fTKgcu9isE',
+    'CAACAgIAAxkBAAEGdVZjdqCrBo85RGcZIGErnzsYzstMJAACWykAAi01oUvpFH7AujT7kCsE',
+    'CAACAgIAAxkBAAEGdVpjdqDB1dWNc_vxG_GE740NNoHWfgACoCEAAuiCoUt66qBRIJCCSisE',
+    'CAACAgIAAxkBAAEGdVxjdqDV7r3QmcfBZzne8Y5PlWMAAcgAAn4hAAKj9qBLSxPVGInbQZkrBA',
+    'CAACAgIAAxkBAAEGdWBjdqD_YmHBllmoF1zVvkhYKN5eeAACpR0AArFpoEvs_tAZAQwhJysE',
+    'CAACAgIAAxkBAAEGdWJjdqEIt18IXDJgApSGVRxNT5KTgQACyCMAAnOXoUul5AQF2oPjpCsE'
+]

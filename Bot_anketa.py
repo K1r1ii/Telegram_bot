@@ -7,6 +7,7 @@ from keyboards import *
 from config import *
 from sqlite_bot.sqlite import *
 from aiogram.types import InputFile
+from random import randint
 
 import datetime
 import asyncio
@@ -545,6 +546,12 @@ async def que2(message: types.Message, state: FSMContext):
                                    text=data['q1'])
             break
 
+#ответ рандомным стикером на стикер
+@dp.message_handler(content_types=['sticker'])
+async def stick_answer(message: types.Message):
+    if message.chat.id != group_id:
+        num = randint(0, len(sticker_id) - 1)
+        await bot.send_sticker(message.from_user.id, sticker_id[num])
 
 #######################################   Реакция на неопознанную команду   ####################################
 @dp.message_handler()
