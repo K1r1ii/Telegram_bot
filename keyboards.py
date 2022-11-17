@@ -31,9 +31,10 @@ def get_admin_keyboard() -> ReplyKeyboardMarkup:
     b3 = KeyboardButton('Сменить пароль')
     b4 = KeyboardButton('Клавиатура пользователь')
     b5 = KeyboardButton('Получить базу данных')
+    b6 = KeyboardButton('Создать напоминание')
     kb.row(b1, b2)
     kb.row(b3, b4)
-    kb.row(b5)
+    kb.row(b5, b6)
     return kb
 
 #создания inline клавиатуры(кнопки закреплены за конкретным сообщением)
